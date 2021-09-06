@@ -1,21 +1,21 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+ * All rights reserved.</center></h2>
+ *
+ * This software component is licensed by ST under BSD 3-Clause license,
+ * the "License"; You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at:
+ *                        opensource.org/licenses/BSD-3-Clause
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -24,12 +24,20 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+uint8_t buf[7];
+const uint8_t READWRITE_CMD = 0x80; // read operation
+int _write(int file, char *ptr, int len) {
+	/* Implement your write code here, this is used by puts and printf for example */
+	int i = 0;
+	for (i = 0; i < len; i++)
+		ITM_SendChar((*ptr++));
+	return len;
+}
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -138,14 +146,13 @@ int main(void)
   MX_SPI1_Init();
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
-
   /* USER CODE END 2 */
 
   /* Init scheduler */
   osKernelInitialize();
 
   /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
+	/* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
   /* Create the semaphores(s) */
@@ -156,15 +163,15 @@ int main(void)
   ConvCpltHandle = osSemaphoreNew(1, 1, &ConvCplt_attributes);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
+	/* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
-  /* start timers, add new ones, ... */
+	/* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
+	/* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -178,11 +185,11 @@ int main(void)
   SD_LogHandle = osThreadNew(Log_Start, NULL, &SD_Log_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
+	/* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
-  /* add events, ... */
+	/* add events, ... */
   /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
@@ -191,12 +198,11 @@ int main(void)
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+	while (1) {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+	}
   /* USER CODE END 3 */
 }
 
@@ -290,7 +296,7 @@ static void MX_SPI1_Init(void)
   hspi1.Instance = SPI1;
   hspi1.Init.Mode = SPI_MODE_MASTER;
   hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi1.Init.DataSize = SPI_DATASIZE_16BIT;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
@@ -389,55 +395,61 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN Header_MPUStart */
 /**
-  * @brief  Function implementing the MPU_Start thread.
-  * @param  argument: Not used
-  * @retval None
-  */
+ * @brief  Function implementing the MPU_Start thread.
+ * @param  argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_MPUStart */
 void MPUStart(void *argument)
 {
   /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+	MX_DMA_Init();
+	MX_SPI1_Init();
+	HAL_GPIO_WritePin(GPIOA, MPU_CS_Pin, GPIO_PIN_SET);
+	/* Infinite loop */
+	for (;;) {
+		uint8_t data= 0x42|READWRITE_CMD;
+		HAL_GPIO_WritePin(GPIOA, MPU_CS_Pin, GPIO_PIN_RESET);
+		HAL_SPI_Transmit(&hspi1, &data ,1, HAL_MAX_DELAY);
+		HAL_SPI_Receive(&hspi1, (uint8_t*)buf,1, HAL_MAX_DELAY);
+		HAL_GPIO_WritePin(GPIOA, MPU_CS_Pin, GPIO_PIN_SET);
+		printf("selesai");
+		osDelay(500);
+	}
   /* USER CODE END 5 */
 }
 
 /* USER CODE BEGIN Header_LEDStart */
 /**
-* @brief Function implementing the LED_Blink thread.
-* @param argument: Not used
-* @retval None
-*/
+ * @brief Function implementing the LED_Blink thread.
+ * @param argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_LEDStart */
 void LEDStart(void *argument)
 {
   /* USER CODE BEGIN LEDStart */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+	/* Infinite loop */
+	for (;;) {
+		osDelay(1);
+	}
   /* USER CODE END LEDStart */
 }
 
 /* USER CODE BEGIN Header_Log_Start */
 /**
-* @brief Function implementing the SD_Log thread.
-* @param argument: Not used
-* @retval None
-*/
+ * @brief Function implementing the SD_Log thread.
+ * @param argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_Log_Start */
 void Log_Start(void *argument)
 {
   /* USER CODE BEGIN Log_Start */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+	/* Infinite loop */
+	for (;;) {
+		osDelay(1);
+	}
   /* USER CODE END Log_Start */
 }
 
@@ -469,11 +481,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
+	/* User can add his own implementation to report the HAL error return state */
+	__disable_irq();
+	while (1) {
+	}
   /* USER CODE END Error_Handler_Debug */
 }
 
