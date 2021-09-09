@@ -414,7 +414,7 @@ void MPUStart(void *argument)
 		HAL_SPI_Receive(&hspi1, (uint8_t*)buf,1, HAL_MAX_DELAY);
 		HAL_GPIO_WritePin(GPIOA, MPU_CS_Pin, GPIO_PIN_SET);
 		printf("selesai");
-		osDelay(500);
+		osDelay(100);
 	}
   /* USER CODE END 5 */
 }
